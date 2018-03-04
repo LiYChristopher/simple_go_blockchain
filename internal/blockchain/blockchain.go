@@ -48,14 +48,14 @@ func (b *Blockchain) NewBlock(proof int64, prevHash *string, blockHash *string) 
 func (b *Blockchain) NewTransaction(sender string, rcpt string, amount float64) {
   //hash content to create TXID
   shaEncoder := sha256.New()
-  concatData := sender + rcpt + strconv.FormatFloat(amount, 'f', 2, 64)
+  concatData := sender + rcpt + strconv.FormatFloat(amount, 'f', 2, 64) + strconv.FormatInt(time.Now().Unix(), 10)
   shaEncoder.Write([]byte(concatData))
   nTID := hex.EncodeToString(shaEncoder.Sum(nil))
   nT := Transaction{ID: nTID, Sender: sender, Recipient: rcpt, Amount: amount}
   b.CurrentTX = append(b.CurrentTX, nT)
 }
 
-func (b *Blockchain) lastBlock() *Block {
+func (b *Blockchain) LastBlock() *Block {
   return &b.Chain[len(b.Chain)-1]
 }
 
@@ -83,7 +83,7 @@ func (b *Blockchain) Mine() {
   //concatenate block data (intermediate data - sha256)
   blockData := strconv.Itoa(int(time.Now().Unix()))
   blockData += b.HashTX()  //merkle root of transactions
-  prevHash := *b.lastBlock().BlockHash
+  prevHash := *b.LastBlock().BlockHash
   blockData += prevHash
   shaEncoder.Write([]byte(blockData))
   intermediateData := hex.EncodeToString(shaEncoder.Sum(nil))
@@ -136,18 +136,18 @@ func (b *Blockchain) VizChain() {
 
 //Transaction is a datastructure for a single piece of data that may exist in a block.
 type Transaction struct {
-  ID string
-  Sender string
-  Recipient string
-  Amount float64
+  ID string `json:",omitempty"`
+  Sender string `json:"sender"`
+  Recipient string `json:"recipient"`
+  Amount float64 `json:"amount"`
 }
 
 //Block represents a unit that may be appended to a blockchain.
 type Block struct {
-  Index int
-  Timestamp int64
-  Transactions []Transaction
-  Proof int64
-  BlockHash *string
-  PrevHash *string
+  Index int `json:"index"`
+  Timestamp int64 `json:"timestamp"`
+  Transactions []Transaction `json:"transactions"`
+  Proof int64 `json:"proof"`
+  BlockHash *string `json:"hash"`
+  PrevHash *string `json:"previous_hash"`
 }
