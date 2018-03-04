@@ -1,9 +1,9 @@
 package main
 
 import (
-  "../internal/api"
+  "internal/api"
 )
 
 func main() {
-
+  api.StartNode()
 }

@@ -7,24 +7,25 @@ import (
   "encoding/hex"
   "strconv"
   "os"
-  "../merkletree"
+  "internal/merkletree"
 )
 
 //Blockchain is data-structure to contain all related operations.
 type Blockchain struct {
-  Chain []Block
-  CurrentTX []Transaction
+  Chain []Block `json:"chain"`
+  CurrentTX []Transaction `json:"-"`
+
 }
 
 //NewBlockChain creates a new chain with an auto-generated 'Genesis' block.
-func NewBlockchain() Blockchain {
+func NewBlockchain() *Blockchain {
   nbc := Blockchain{}
 
   // instantiate genesis block
   genPrevHash := "250000"
   genBlockHash := "250001"
   nbc.NewBlock(0, &genPrevHash, &genBlockHash)
-  return nbc
+  return &nbc
 }
 
 //NewBlock appends to the chain (ledger) once proof has been solved
