@@ -1,27 +1,27 @@
 package blockchain
 
 import (
-  "net/http"
-  "fmt"
-  "encoding/json"
-  "time"
-  "io/ioutil"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"time"
 )
 
 //helper to get response of nodeChain
 func getNodeChain(node string) *Blockchain {
-  var bc *Blockchain
-  url := fmt.Sprintf("%v/chain", node)
-  req, _ := http.NewRequest("GET", url, nil)
+	var bc *Blockchain
+	url := fmt.Sprintf("%v/chain", node)
+	req, _ := http.NewRequest("GET", url, nil)
 
-  // get []bytes & unmarshal into *Blockchain
-  data := executeRequest(req)
+	// get []bytes & unmarshal into *Blockchain
+	data := executeRequest(req)
 
-  err := json.Unmarshal(data, &bc)
-  if err != nil {
-    fmt.Println(err)
-  }
-  return bc
+	err := json.Unmarshal(data, &bc)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return bc
 }
 
 //executeRequest wraps an HTTP client and returns request response as []bytes.

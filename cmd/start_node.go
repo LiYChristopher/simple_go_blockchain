@@ -1,12 +1,12 @@
 package main
 
 import (
-  "internal/api"
-  "flag"
+	"flag"
+	"internal/api"
 )
 
 func main() {
-  port := flag.String("port", "8000", "exposed port of blockchain node.")
-  flag.Parse()
-  api.StartNode(port)
+	port := flag.String("port", "8000", "exposed port of blockchain node.")
+	flag.Parse()
+	api.StartNode(port)
 }
