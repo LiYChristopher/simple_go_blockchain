@@ -9,8 +9,18 @@ import (
   "github.com/gorilla/mux"
 )
 
-type ErrorResponse struct {
+//Alternative response objects
+type GenericResponse struct {
   Message string `json:"message"`
+}
+
+type Node struct {
+  Addr string `json:"address"`
+}
+
+type ResolveResponse struct {
+  Message string `json:"message"`
+  Chain []blockchain.Block `json:"chain"`
 }
 
 //JSONResponse returns JSON response body given an http.ResponseWriter and struct.
@@ -39,36 +49,40 @@ func StartNode(port *string) {
     }).Methods("POST")
 
   // Service Node Management routes
-  router.HandleFunc("/node/register", func(w http.ResponseWriter, r *http.Request) {
+  router.HandleFunc("/nodes/register", func(w http.ResponseWriter, r *http.Request) {
     registerNode(w, r, BC)
   }).Methods("POST")
 
-  router.HandleFunc("/node/resolve", func(w http.ResponseWriter, r *http.Request) {
-    resolveNode(w, r, BC)
+  router.HandleFunc("/nodes/resolve", func(w http.ResponseWriter, r *http.Request) {
+    attainConsensus(w, r, BC)
   }).Methods("GET")
 
   // Start Server
-  log.Printf("Starting BasicCoin Node on port %v ....", *port)
+  log.Printf("Starting Basic Coin Node on port %v ....", *port)
   http.Handle("/", router)
   log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", *port), router))
 }
 
 //Handler for GET /chain
 func getChain(w http.ResponseWriter, r *http.Request, BC *blockchain.Blockchain) {
-  JSONResponse(w, http.StatusCreated, BC)
+  JSONResponse(w, http.StatusOK, BC)
 }
 
 //Handler for GET /mine. JSON response includes new block added to blockchain
 func mineBlock(w http.ResponseWriter, r *http.Request, BC *blockchain.Blockchain) {
-  BC.Mine()
-  nb := BC.LastBlock()
-  log.Printf("##### New Block %v created. #####", *nb.BlockHash)
-  JSONResponse(w, http.StatusCreated, nb)
+  if len(BC.CurrentTX) == 0 {
+    noCurrentTX := GenericResponse{Message: "No pending transactions."}
+    JSONResponse(w, http.StatusOK, noCurrentTX)
+  } else {
+    BC.Mine()
+    nb := BC.LastBlock()
+    log.Printf("##### New Block %v created. #####", *nb.BlockHash)
+    JSONResponse(w, http.StatusCreated, nb)
+  }
 }
 
 //Handler for POST /transaction/new
 func postTransaction(w http.ResponseWriter, r *http.Request, BC *blockchain.Blockchain) {
-
   var _iTx blockchain.Transaction
   decoder := json.NewDecoder(r.Body)
   err := decoder.Decode(&_iTx)
@@ -83,13 +97,8 @@ func postTransaction(w http.ResponseWriter, r *http.Request, BC *blockchain.Bloc
   JSONResponse(w, http.StatusCreated, newTX)
 }
 
-type Node struct {
-    Addr string `json:"address"`
-}
-
 //Handler for POST /node/register
 func registerNode(w http.ResponseWriter, r *http.Request, BC *blockchain.Blockchain) {
-
   var _n Node
   decoder := json.NewDecoder(r.Body)
   err := decoder.Decode(&_n)
@@ -100,7 +109,7 @@ func registerNode(w http.ResponseWriter, r *http.Request, BC *blockchain.Blockch
 
   err = BC.NewNode(_n.Addr)
   if err != nil {
-    e := ErrorResponse{Message: err.Error()}
+    e := GenericResponse{Message: err.Error()}
     JSONResponse(w, http.StatusBadRequest, e)
   } else {
     log.Printf("New Node %v registered.", _n)
@@ -109,6 +118,18 @@ func registerNode(w http.ResponseWriter, r *http.Request, BC *blockchain.Blockch
 }
 
 //Handler for GET /node/resolve
-func resolveNode(w http.ResponseWriter, r *http.Request, BC *blockchain.Blockchain) {
+func attainConsensus(w http.ResponseWriter, r *http.Request, BC *blockchain.Blockchain) {
+  var resolveResp ResolveResponse
+  replaced := BC.ResolveConflicts()
+  if replaced {
+    resolveResp = ResolveResponse{Message: "Conflicts resolved. Chain replaced.",
+      Chain: BC.Chain,
+    }
+  } else {
+    resolveResp = ResolveResponse{Message: "Existing chain persists.",
+      Chain: BC.Chain,
+    }
+  }
 
+  JSONResponse(w, http.StatusOK, resolveResp)
 }

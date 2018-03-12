@@ -8,7 +8,7 @@ import (
 //MerkleTree struct hashes tX IDs, and calculates MerkleRoot.
 type MerkleTree struct {
   Root *string
-  TXIDs []string
+  TransactionIDs []string
   layers [][]string //illustrates leaves --> root
 }
 
@@ -23,16 +23,20 @@ func (mt *MerkleTree) hashPair(tx1 string, tx2 string) string {
 //GetRoot recursively calculates Merkleroot from txIDs.
 func (mt *MerkleTree) GetRoot() {
   var concat string
-	if len(mt.TXIDs) == 1 {
-		root := mt.TXIDs[0]
+  // if no current transactions, set root to ''
+  if len(mt.TransactionIDs) == 0 {
+    root := ""
+    mt.Root = &root
+    return
+  }
+
+	if len(mt.TransactionIDs) == 1 {
+		root := mt.TransactionIDs[0]
 		mt.Root = &root
 	} else {
-    //fmt.Printf("Concat Hashing Tx '%v' with '%v'\n", mt.TXIDs[0], mt.TXIDs[1])
-  	concat = mt.hashPair(mt.TXIDs[0], mt.TXIDs[1])
-  	mt.TXIDs = append([]string{concat}, mt.TXIDs[2:]...)
-  	//fmt.Println("Completed 1 iteration of tree")
-  	//fmt.Printf(" -- %v\n\n", mt.TXIDs)
-    mt.layers = append(mt.layers, mt.TXIDs)
+  	concat = mt.hashPair(mt.TransactionIDs[0], mt.TransactionIDs[1])
+  	mt.TransactionIDs = append([]string{concat}, mt.TransactionIDs[2:]...)
+    mt.layers = append(mt.layers, mt.TransactionIDs)
   	mt.GetRoot()
   }
 }
