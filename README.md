@@ -1,6 +1,6 @@
 # Basic Chain - In Go
 
-Created by following this [great tutorial]('https://hackernoon.com/learn-blockchains-by-building-one-117428612f46'), and also inspired in part by this existing Go implementation https://github.com/crisadamo/gochain.
+Created by following this [great tutorial](https://hackernoon.com/learn-blockchains-by-building-one-117428612f46), and also inspired in part by this existing Go implementation https://github.com/crisadamo/gochain.
 
 Completed for learning purposes. How this differs from the original:
 

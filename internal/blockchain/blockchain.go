@@ -89,16 +89,16 @@ func (b *Blockchain) LastBlock() *Block {
 
 //HashBlock hashes a block - transactions, previous hash, proof.
 func (b *Blockchain) HashBlock(block *Block) string {
-	hashedBlockData := b.hashBlockData(block)
+	hashedBlockData := b.hashBlockData(block, block.Transactions, block.PrevHash)
 	hashedBlockData += strconv.Itoa(int(block.Proof))
 	return encodeSHA256(hashedBlockData)
 }
 
 //hashBlockData calculates the SHA-256 hash of a given block's transactions and previous hash.
 //this is the intermediate step prior to calculation of the block's hash using proof.
-func (b *Blockchain) hashBlockData(block *Block) string {
-	blockData := b.HashTX(getTXIDs(block.Transactions))
-	blockData += *block.PrevHash
+func (b *Blockchain) hashBlockData(block *Block, txs []Transaction, prevHash *string) string {
+	blockData := b.HashTX(getTXIDs(txs))
+	blockData += *prevHash
 	blockData = encodeSHA256(blockData)
 	return blockData
 }
@@ -115,14 +115,13 @@ func (b *Blockchain) Mine() {
 	var proof int64
 
 	//concatenate block data (intermediate data - sha256)
-	blockData := b.HashTX(getTXIDs(b.CurrentTX)) //merkle root of transactions
-	prevHash := *b.LastBlock().BlockHash
-	blockData += prevHash
-	pendingBlockData := encodeSHA256(blockData)
+	lastBlock := b.LastBlock()
+	prevHash := lastBlock.BlockHash
+	pendingBlockData := b.hashBlockData(lastBlock, b.CurrentTX, prevHash)
 
 	//calculate proof of work
 	proof, newBlockHash := b.proveAndHash(pendingBlockData)
-	b.NewBlock(proof, &prevHash, &newBlockHash)
+	b.NewBlock(proof, prevHash, &newBlockHash)
 }
 
 //proveAndHash performs POW, and then returns proof (nonce) and resulting hash
@@ -178,7 +177,7 @@ func (b *Blockchain) isValidChain() bool {
 
 		//since previous hash is encoded in current block data, isValidPoW will simply verify the
 		//the proof still stands given the previous hash hasn't changed
-		hashedCurBlockData := b.hashBlockData(&block)
+		hashedCurBlockData := b.hashBlockData(&block, block.Transactions, block.PrevHash)
 
 		//Check that the Proof of Work is correct
 		if !b.isValidPoW(hashedCurBlockData, block.Proof) {
